@@ -1,12 +1,27 @@
 package xsbt.boot
 
 import Pre._
-import java.io.File
+import java.io.{ File, PrintWriter }
 import java.net.URLClassLoader
 
 final class ModuleDefinition(val configuration: UpdateConfiguration, val extraClasspath: Array[File], val target: UpdateTarget, val failLabel: String) {
   def retrieveFailed: Nothing = fail("")
-  def retrieveCorrupt(missing: Iterable[String]): Nothing = fail(": missing " + missing.mkString(", "))
+  def retrieveCorrupt(missing: Iterable[(String, Throwable)]): Nothing = {
+    val writer = new java.io.StringWriter()
+    val printWriter = new PrintWriter(writer)
+    try {
+      printWriter.write("Unable to load some classes. Possible corrupt JARs.")
+      for ((className, throwable) <- missing) {
+        printWriter.append("missing: ").append(className).println()
+        printWriter.append("reason: ")
+        throwable.printStackTrace(printWriter)
+        printWriter.println()
+      }
+    } finally {
+      printWriter.close()
+    }
+    fail(writer.toString)
+  }
   private def fail(extra: String) =
     throw new xsbti.RetrieveException(versionString, "could not retrieve " + failLabel + extra)
   private def versionString: String = target match { case _: UpdateScala => configuration.getScalaVersion; case a: UpdateApp => Value.get(a.id.version) }

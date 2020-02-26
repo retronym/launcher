@@ -247,7 +247,7 @@ class Launch private[xsbt] (val bootDirectory: File, val lockBoot: Boolean, val 
     }
   def scalaHome(scalaOrg: String, scalaVersion: Option[String]): File = new File(bootDirectory, baseDirectoryName(scalaOrg, scalaVersion))
   def appHome(id: xsbti.ApplicationID, scalaVersion: Option[String]): File = appDirectory(scalaHome(ScalaOrg, scalaVersion), id)
-  def checkedAppProvider(id: xsbti.ApplicationID, module: RetrievedModule, scalaProvider: xsbti.ScalaProvider): (Iterable[String], xsbti.AppProvider) =
+  def checkedAppProvider(id: xsbti.ApplicationID, module: RetrievedModule, scalaProvider: xsbti.ScalaProvider): (Iterable[(String, Throwable)], xsbti.AppProvider) =
     {
       val p = appProvider(id, module, scalaProvider, appHome(id, Some(scalaProvider.version)))
       val missing = getMissing(p.loader, id.mainClass :: Nil)

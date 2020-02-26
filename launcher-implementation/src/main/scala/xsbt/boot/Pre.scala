@@ -61,10 +61,11 @@ object Pre {
   object JarFilter extends FileFilter {
     def accept(file: File) = !file.isDirectory && file.getName.endsWith(".jar")
   }
-  def getMissing(loader: ClassLoader, classes: Iterable[String]): Iterable[String] =
+  def getMissing(loader: ClassLoader, classes: Iterable[String]): Iterable[(String, Throwable)] =
     {
-      def classMissing(c: String) = try { Class.forName(c, false, loader); false } catch { case e: ClassNotFoundException => true }
-      classes.toList.filter(classMissing)
+      classes.toList.flatMap { c =>
+        try { Class.forName(c, false, loader); Nil } catch { case e: LinkageError => (c, e) :: Nil }
+      }
     }
   def toURLs(files: Array[File]): Array[URL] = files.map(_.toURI.toURL)
   def toFile(url: URL): File =
